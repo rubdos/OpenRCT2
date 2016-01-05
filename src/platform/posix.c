@@ -490,38 +490,38 @@ int platform_get_drives(){
 
 bool platform_file_copy(const utf8 *srcPath, const utf8 *dstPath, bool overwrite)
 {
-    log_verbose("Copying %s to %s", srcPath, dstPath);
+	log_verbose("Copying %s to %s", srcPath, dstPath);
 
-    // If overwrite is not on and the file already exists, return 0
-    if(!overwrite && (access(dstPath, F_OK) != -1)) {
-        log_warning("platform_file_copy: Not overwriting %s, because overwrite flag == false", dstPath);
-        return 0;
-    }
+	// If overwrite is not on and the file already exists, return 0
+	if(!overwrite && (access(dstPath, F_OK) != -1)) {
+		log_warning("platform_file_copy: Not overwriting %s, because overwrite flag == false", dstPath);
+		return 0;
+	}
 
 
-    // Open both files and check whether they are opened correctly
-    FILE *srcFile = fopen(srcPath, "r");
-    if(!srcFile) {
-        log_error("Could not open source file %s for copying", srcPath);
-        return 0;
-    }
+	// Open both files and check whether they are opened correctly
+	FILE *srcFile = fopen(srcPath, "r");
+	if(!srcFile) {
+		log_error("Could not open source file %s for copying", srcPath);
+		return 0;
+	}
 
-    FILE *dstFile = fopen(dstPath, "w");
-    if(!dstFile) {
-        fclose(srcFile);
-        log_error("Could not open destination file %s for copying", dstPath);
-        return 0;
-    }
+	FILE *dstFile = fopen(dstPath, "w");
+	if(!dstFile) {
+		fclose(srcFile);
+		log_error("Could not open destination file %s for copying", dstPath);
+		return 0;
+	}
 
-    size_t amount_read = 0;
+	size_t amount_read = 0;
 
-    char* buffer = (char*) malloc(FILE_BUFFER_SIZE);
-    while(amount_read = fread(buffer, FILE_BUFFER_SIZE, 1, srcFile)) {
-        fwrite(buffer, amount_read, 1, dstFile);
-    }
-    fclose(srcFile);
-    fclose(dstFile);
-    free(buffer);
+	char* buffer = (char*) malloc(FILE_BUFFER_SIZE);
+	while(amount_read = fread(buffer, FILE_BUFFER_SIZE, 1, srcFile)) {
+		fwrite(buffer, amount_read, 1, dstFile);
+	}
+	fclose(srcFile);
+	fclose(dstFile);
+	free(buffer);
 
 	return 0;
 }
@@ -565,8 +565,8 @@ void platform_posix_sub_user_data_path(char *buffer, const char *homedir, const 
 
 /**
  * Default directory fallback is:
- *   - (command line argument)
- *   - <platform dependent>
+ *	 - (command line argument)
+ *	 - <platform dependent>
  */
 void platform_resolve_user_data_path()
 {
@@ -609,9 +609,9 @@ void platform_posix_sub_resolve_openrct_data_path(utf8 *out);
 
 /**
  * Default directory fallback is:
- *   - (command line argument)
- *   - <exePath>/data
- *   - <platform dependent>
+ *	 - (command line argument)
+ *	 - <exePath>/data
+ *	 - <platform dependent>
  */
 void platform_resolve_openrct_data_path()
 {
