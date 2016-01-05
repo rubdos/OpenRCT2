@@ -38,11 +38,12 @@
 #include <locale.h>
 #include <sys/time.h>
 #include <time.h>
+#include <sys/sendfile.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 // The name of the mutex used to prevent multiple instances of the game from running
 #define SINGLE_INSTANCE_MUTEX_NAME "RollerCoaster Tycoon 2_GSKMUTEX"
-
-#define FILE_BUFFER_SIZE 4096
 
 utf8 _userDataDirectoryPath[MAX_PATH] = { 0 };
 utf8 _openrctDataDirectoryPath[MAX_PATH] = { 0 };
@@ -490,38 +491,36 @@ int platform_get_drives(){
 
 bool platform_file_copy(const utf8 *srcPath, const utf8 *dstPath, bool overwrite)
 {
-    log_verbose("Copying %s to %s", srcPath, dstPath);
+	log_verbose("Copying %s to %s", srcPath, dstPath);
 
-    // If overwrite is not on and the file already exists, return 0
-    if(!overwrite && (access(dstPath, F_OK) != -1)) {
-        log_warning("platform_file_copy: Not overwriting %s, because overwrite flag == false", dstPath);
-        return 0;
-    }
+	// If overwrite is not on and the file already exists, return 0
+	if(!overwrite && (access(dstPath, F_OK) != -1)) {
+		log_warning("platform_file_copy: Not overwriting %s, because overwrite flag == false", dstPath);
+		return 0;
+	}
 
 
-    // Open both files and check whether they are opened correctly
-    FILE *srcFile = fopen(srcPath, "r");
-    if(!srcFile) {
-        log_error("Could not open source file %s for copying", srcPath);
-        return 0;
-    }
+	// Open both files and check whether they are opened correctly
+	int srcFile = open(srcPath, O_RDONLY);
+	if(!srcFile) {
+		log_error("Could not open source file %s for copying", srcPath);
+		return 0;
+	}
 
-    FILE *dstFile = fopen(dstPath, "w");
-    if(!dstFile) {
-        fclose(srcFile);
-        log_error("Could not open destination file %s for copying", dstPath);
-        return 0;
-    }
+	int dstFile = open(dstPath, O_WRONLY|O_CREAT);
+	if(!dstFile) {
+		close(srcFile);
+		log_error("Could not open destination file %s for copying", dstPath);
+		return 0;
+	}
 
-    size_t amount_read = 0;
+	struct stat stat_buf;
 
-    char* buffer = (char*) malloc(FILE_BUFFER_SIZE);
-    while(amount_read = fread(buffer, FILE_BUFFER_SIZE, 1, srcFile)) {
-        fwrite(buffer, amount_read, 1, dstFile);
-    }
-    fclose(srcFile);
-    fclose(dstFile);
-    free(buffer);
+	// Get filesize of the file, so sendfile can copy it.
+	sendfile(dstFile, srcFile, NULL, stat_buf.st_size);
+
+	close(srcFile);
+	close(dstFile);
 
 	return 0;
 }
@@ -565,8 +564,8 @@ void platform_posix_sub_user_data_path(char *buffer, const char *homedir, const 
 
 /**
  * Default directory fallback is:
- *   - (command line argument)
- *   - <platform dependent>
+ *	 - (command line argument)
+ *	 - <platform dependent>
  */
 void platform_resolve_user_data_path()
 {
@@ -609,9 +608,9 @@ void platform_posix_sub_resolve_openrct_data_path(utf8 *out);
 
 /**
  * Default directory fallback is:
- *   - (command line argument)
- *   - <exePath>/data
- *   - <platform dependent>
+ *	 - (command line argument)
+ *	 - <exePath>/data
+ *	 - <platform dependent>
  */
 void platform_resolve_openrct_data_path()
 {
