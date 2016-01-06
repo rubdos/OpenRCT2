@@ -536,7 +536,7 @@ bool platform_file_copy(const utf8 *srcPath, const utf8 *dstPath, bool overwrite
 	log_verbose("Copying %s to %s", srcPath, dstPath);
 
 	// If overwrite is not on and the file already exists, return 0
-	if(!overwrite && (access(dstPath, F_OK) != -1)) {
+	if(!overwrite && platform_file_exists(dstPath)) {
 		log_warning("platform_file_copy: Not overwriting %s, because overwrite flag == false", dstPath);
 		return 0;
 	}
