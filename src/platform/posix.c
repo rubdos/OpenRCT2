@@ -175,19 +175,19 @@ bool platform_directory_delete(const utf8 *path)
 	strcpy(ourPath, path);
 
 	utf8* const patharray[2] = {ourPath, NULL};
-	if((ftsp = fts_open(patharray, FTS_COMFOLLOW | FTS_LOGICAL | FTS_NOCHDIR, NULL)) == NULL) {
+	if ((ftsp = fts_open(patharray, FTS_COMFOLLOW | FTS_LOGICAL | FTS_NOCHDIR, NULL)) == NULL) {
 		log_error("fts_open returned NULL");
 		return 0;
 	}
 
 	chp = fts_children(ftsp, 0);
-	if(chp == NULL) {
+	if (chp == NULL) {
 		log_verbose("No files to traverse, deleting directory %s", path);
 		remove(path);
 		return 1; // No files to traverse
 	}
 
-	while((p = fts_read(ftsp)) != NULL) {
+	while ((p = fts_read(ftsp)) != NULL) {
 		switch (p->fts_info) {
 			case FTS_DP: // Directory postorder, which means
 						 // the directory is empty
@@ -226,10 +226,10 @@ bool platform_lock_single_instance()
 
 	int pidFile = open(pidFilePath, O_CREAT | O_RDWR, 0666);
 
-	if(pidFile == -1) {
+	if (pidFile == -1) {
 		log_warning("Cannot open lock file for writing.");
 	}
-	if(flock(pidFile, LOCK_EX | LOCK_NB) == -1) {
+	if (flock(pidFile, LOCK_EX | LOCK_NB) == -1) {
 		if(errno == EWOULDBLOCK) {
 			log_warning("Another OpenRCT2 session has been found running.");
 			return false;
