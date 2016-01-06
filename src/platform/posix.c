@@ -191,7 +191,7 @@ bool platform_directory_delete(const utf8 *path)
 		switch (p->fts_info) {
 			case FTS_DP: // Directory postorder, which means
 						 // the directory is empty
-						 
+
 			case FTS_F:  // File
 				if(remove(p->fts_path)) {
 					log_error("Could not remove %s", p->fts_path);
@@ -221,7 +221,7 @@ bool platform_lock_single_instance()
 
 	strncpy(pidFilePath, _userDataDirectoryPath, MAX_PATH);
 	strncat(pidFilePath, &separator, 1);
-	strncat(pidFilePath, "openrct2.lock", 
+	strncat(pidFilePath, "openrct2.lock",
 			MAX_PATH - strnlen(pidFilePath, MAX_PATH) - 1);
 
 	int pidFile = open(pidFilePath, O_CREAT | O_RDWR, 0666);
@@ -556,33 +556,39 @@ bool platform_file_copy(const utf8 *srcPath, const utf8 *dstPath, bool overwrite
 {
 	log_verbose("Copying %s to %s", srcPath, dstPath);
 
-	// If overwrite is not on and the file already exists, return 0
-	if(!overwrite && platform_file_exists(dstPath)) {
-		log_warning("platform_file_copy: Not overwriting %s, because overwrite flag == false", dstPath);
-		return 0;
+	FILE *dstFile;
+
+ 	if (overwrite) {
+		dstFile = fopen(dstPath, "wb");
+	} else {
+		dstFile = fopen(dstPath, "wbx");
 	}
 
+	if (!dstFile) {
+		if (errno == EEXIST) {
+			log_warning("platform_file_copy: Not overwriting %s, because overwrite flag == false", dstPath);
+			return 0;
+		}
+
+		log_error("Could not open destination file %s for copying", dstPath);
+		return 0;
+	}
 
 	// Open both files and check whether they are opened correctly
-	FILE *srcFile = fopen(srcPath, "r");
-	if(!srcFile) {
+	FILE *srcFile = fopen(srcPath, "rb");
+	if (!srcFile) {
+		fclose(dstFile);
 		log_error("Could not open source file %s for copying", srcPath);
-		return 0;
-	}
-
-	FILE *dstFile = fopen(dstPath, "w");
-	if(!dstFile) {
-		fclose(srcFile);
-		log_error("Could not open destination file %s for copying", dstPath);
 		return 0;
 	}
 
 	size_t amount_read = 0;
 
 	char* buffer = (char*) malloc(FILE_BUFFER_SIZE);
-	while(amount_read = fread(buffer, FILE_BUFFER_SIZE, 1, srcFile)) {
+	while ((amount_read = fread(buffer, FILE_BUFFER_SIZE, 1, srcFile))) {
 		fwrite(buffer, amount_read, 1, dstFile);
 	}
+
 	fclose(srcFile);
 	fclose(dstFile);
 	free(buffer);
